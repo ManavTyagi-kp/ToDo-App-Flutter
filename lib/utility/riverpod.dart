@@ -4,22 +4,25 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final todoProvider = StateNotifierProvider<UserNotifier, Todo>(
-  (ref) => UserNotifier(
-    Todo(
-      desc: '',
-      dateTime: DateTime.now(),
-      active: false,
-    ),
-  ),
-);
-
+// final todoProvider = StateNotifierProvider<UserNotifier, Todo>(
+//   (ref) => UserNotifier(
+//     Todo(
+//       desc: '',
+//       dateTime: DateTime.now(),
+//       active: false,
+//     ),
+//   ),
+// );
 final todos = <Todo>[];
+
+final todoProvider = StateNotifierProvider<UserNotifier, List<Todo>>(
+  (ref) => UserNotifier(),
+);
 
 class Todo {
   // final int index;
-  final String desc;
-  final DateTime dateTime;
+  String desc;
+  DateTime dateTime;
   bool active;
 
   Todo({
@@ -78,10 +81,28 @@ class Todo {
   int get hashCode => desc.hashCode ^ dateTime.hashCode ^ active.hashCode;
 }
 
-class UserNotifier extends StateNotifier<Todo> {
-  UserNotifier(super.state);
+// class UserNotifier extends StateNotifier<Todo> {
+//   UserNotifier(super.state);
 
-  void updateStatus(bool newValue) {
-    state = Todo(desc: state.desc, dateTime: state.dateTime, active: newValue);
+//   void updateStatus(bool newValue) {
+//     state = Todo(desc: state.desc, dateTime: state.dateTime, active: newValue);
+//   }
+// }
+
+class UserNotifier extends StateNotifier<List<Todo>> {
+  UserNotifier() : super([]);
+
+  void updateTodoStatus(int index, bool newStatus) {
+    state[index] = state[index].copyWith(active: newStatus);
+    state = [...state];
+  }
+
+  void updateText(int index, String newText) {
+    state[index] = state[index].copyWith(desc: newText);
+    state = [...state];
+  }
+
+  void changeData(Todo todo) {
+    state = [...state, todo];
   }
 }

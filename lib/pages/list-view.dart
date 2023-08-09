@@ -4,6 +4,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:to_do_list/pages/list.dart';
 
 import '../utility/riverpod.dart';
 
@@ -18,7 +19,7 @@ class _MyListState extends State<MyList> {
   String? desc;
 
   void changeStatus(WidgetRef ref, bool newValue) {
-    ref.read(todoProvider.notifier).updateStatus(newValue);
+    // ref.read(todoProvider.notifier).updateStatus(newValue);
   }
 
   DateTime dateTime = DateTime.now();

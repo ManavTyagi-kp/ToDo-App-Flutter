@@ -1,0 +1,87 @@
+import 'dart:convert';
+import 'dart:developer';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+final todoProvider = StateNotifierProvider<UserNotifier, Todo>(
+  (ref) => UserNotifier(
+    Todo(
+      desc: '',
+      dateTime: DateTime.now(),
+      active: false,
+    ),
+  ),
+);
+
+final todos = <Todo>[];
+
+class Todo {
+  // final int index;
+  final String desc;
+  final DateTime dateTime;
+  bool active;
+
+  Todo({
+    required this.desc,
+    required this.dateTime,
+    required this.active,
+  });
+
+  Todo copyWith({
+    String? desc,
+    DateTime? dateTime,
+    bool? active,
+  }) {
+    return Todo(
+      desc: desc ?? this.desc,
+      dateTime: dateTime ?? this.dateTime,
+      active: active ?? this.active,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{
+      'desc': desc,
+      'dateTime': dateTime.millisecondsSinceEpoch,
+      'active': active,
+    };
+  }
+
+  factory Todo.fromMap(Map<String, dynamic> map) {
+    return Todo(
+      desc: map['desc'] as String,
+      dateTime: DateTime.fromMillisecondsSinceEpoch(map['dateTime'] as int),
+      active: map['active'] as bool,
+    );
+  }
+
+  String toJson() => json.encode(toMap());
+
+  factory Todo.fromJson(String source) =>
+      Todo.fromMap(json.decode(source) as Map<String, dynamic>);
+
+  @override
+  String toString() =>
+      'Todo(desc: $desc, dateTime: $dateTime, active: $active)';
+
+  @override
+  bool operator ==(covariant Todo other) {
+    if (identical(this, other)) return true;
+
+    return other.desc == desc &&
+        other.dateTime == dateTime &&
+        other.active == active;
+  }
+
+  @override
+  int get hashCode => desc.hashCode ^ dateTime.hashCode ^ active.hashCode;
+}
+
+class UserNotifier extends StateNotifier<Todo> {
+  UserNotifier(super.state);
+
+  void updateStatus(bool newValue) {
+    state = Todo(desc: state.desc, dateTime: state.dateTime, active: newValue);
+  }
+}

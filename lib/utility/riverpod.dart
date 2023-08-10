@@ -13,7 +13,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 //     ),
 //   ),
 // );
-final todos = <Todo>[];
+Todo todo1 = Todo(desc: '111ef', dateTime: DateTime.now(), active: false);
+Todo todo2 = Todo(desc: '222ef', dateTime: DateTime.now(), active: false);
+Todo todo3 = Todo(desc: '333ef', dateTime: DateTime.now(), active: false);
+final todos = <Todo>[todo1, todo2, todo3];
 
 final todoProvider = StateNotifierProvider<UserNotifier, List<Todo>>(
   (ref) => UserNotifier(),
@@ -90,7 +93,7 @@ class Todo {
 // }
 
 class UserNotifier extends StateNotifier<List<Todo>> {
-  UserNotifier() : super([]);
+  UserNotifier() : super([todo1, todo2, todo3]);
 
   void updateTodoStatus(int index, bool newStatus) {
     state[index] = state[index].copyWith(active: newStatus);
@@ -104,5 +107,12 @@ class UserNotifier extends StateNotifier<List<Todo>> {
 
   void changeData(Todo todo) {
     state = [...state, todo];
+  }
+
+  void swapItem(int oldIndex, int newIndex) {
+    final newState = [...state];
+    final itemToMove = newState.removeAt(oldIndex);
+    newState.insert(newIndex, itemToMove);
+    state = newState;
   }
 }

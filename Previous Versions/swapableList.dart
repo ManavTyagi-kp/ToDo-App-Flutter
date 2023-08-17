@@ -7,12 +7,12 @@ final validateStateProvider = StateProvider<bool>((ref) {
   return false;
 });
 
-class ListViewer extends ConsumerWidget {
+class ListViewerSwap extends ConsumerWidget {
   // const ListViewer({super.key});
 
   var desc;
 
-  ListViewer({super.key});
+  ListViewerSwap({super.key});
 
   void changeStatus(WidgetRef ref, Todo todo) {
     ref.read(todoProvider.notifier).changeData(todo);
@@ -30,7 +30,7 @@ class ListViewer extends ConsumerWidget {
     final validator = ref.watch(validateStateProvider);
     // final todoList = ref.watch(todoProvider);
     return Scaffold(
-      body: const ListItem(),
+      body: ListSwapStl(),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           showDialog(
@@ -101,6 +101,7 @@ class ListViewer extends ConsumerWidget {
                         changeStatus(
                           ref,
                           Todo(
+                            ind: 0, //TODO Error
                             desc: desc!,
                             dateTime: dateTime,
                             active: false,
@@ -137,44 +138,51 @@ class ListViewer extends ConsumerWidget {
       );
 }
 
-class ListItem extends ConsumerStatefulWidget {
-  const ListItem({super.key});
+class ListSwapStl extends ConsumerWidget {
+  // const ListSwapStl({super.key});
 
-  @override
-  ConsumerState<ListItem> createState() => _ListItemState();
-}
-
-class _ListItemState extends ConsumerState<ListItem> {
-  GlobalKey<_ListItemState> myWidgetKey = GlobalKey<_ListItemState>();
+  var desc;
 
   void changeStatus(WidgetRef ref, Todo todo) {
     ref.read(todoProvider.notifier).changeData(todo);
   }
 
+  FocusNode _generateFocus(int index) {
+    final FocusNode index = FocusNode();
+    return index;
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     debugPrint('Build');
     final todoList = ref.watch(todoProvider);
+    final FocusNode foucusNode1 = FocusNode();
 
     final userNotifier = ref.read(todoProvider.notifier);
     return Scaffold(
-      body: ListView.builder(
-          itemCount: ref.watch(todoProvider.select((value) => value.length)),
-          itemBuilder: (_, index) {
-            return CheckboxListTile(
+      body: ReorderableListView(
+        buildDefaultDragHandles: true,
+        children: [
+          for (int index = 0; index < todoList.length; index++)
+            CheckboxListTile(
+              // key: ValueKey(index),
+              key: GlobalKey(),
               value: todoList[index].active,
               onChanged: (value) {
-                // setState(() {
-                //   index.active = value!;
-                // });
                 userNotifier.updateTodoStatus(index, value!);
-                // changeStatus(ref, todoList[index]);
               },
               title: TextFormField(
+                focusNode: _generateFocus(index),
+                textInputAction: TextInputAction.done,
                 decoration: const InputDecoration(border: InputBorder.none),
                 initialValue: todoList[index].desc,
-                onChanged: (value) {
-                  userNotifier.updateText(index, value);
+                onFieldSubmitted: (val) {
+                  print(GlobalKey());
+                  _generateFocus(index).dispose();
+                  userNotifier.updateText(index, val);
+                },
+                onEditingComplete: () {
+                  _generateFocus(index).dispose();
                 },
                 style: todoList[index].active
                     ? const TextStyle(
@@ -192,8 +200,85 @@ class _ListItemState extends ConsumerState<ListItem> {
                 '${todoList[index].dateTime.day}/${todoList[index].dateTime.month}/${todoList[index].dateTime.year}   ${todoList[index].dateTime.hour}:${todoList[index].dateTime.minute}',
                 style: const TextStyle(fontSize: 12),
               ),
-            );
-          }),
+            ),
+        ],
+        onReorder: (oldIndex, newIndex) {
+          if (oldIndex < newIndex) {
+            newIndex -= 1;
+          }
+          userNotifier.swapItem(oldIndex, newIndex);
+        },
+      ),
     );
   }
 }
+
+// class ListSwapStf extends ConsumerStatefulWidget {
+//   const ListSwapStf({super.key});
+
+//   @override
+//   ConsumerState<ListSwapStf> createState() => _ListSwapStfState();
+// }
+
+// class _ListSwapStfState extends ConsumerState<ListSwapStf> {
+//   void changeStatus(WidgetRef ref, Todo todo) {
+//     ref.read(todoProvider.notifier).changeData(todo);
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     debugPrint('Build');
+//     final todoList = ref.watch(todoProvider);
+
+//     final userNotifier = ref.read(todoProvider.notifier);
+//     return Scaffold(
+//       body: ReorderableListView(
+//         buildDefaultDragHandles: true,
+//         children: [
+//           for (int index = 0; index < todoList.length; index++)
+//             CheckboxListTile(
+//               // key: ValueKey(index),
+//               key: GlobalKey(),
+//               value: todoList[index].active,
+//               onChanged: (value) {
+//                 userNotifier.updateTodoStatus(index, value!);
+//               },
+//               title: TextFormField(
+//                 decoration: const InputDecoration(border: InputBorder.none),
+//                 initialValue: todoList[index].desc,
+//                 // onFieldSubmitted: (value) {
+//                 //   userNotifier.updateText(index, value);
+//                 // },
+//                 onChanged: (value) {
+//                   setState(() {
+//                     userNotifier.updateText(index, value);
+//                   });
+//                 },
+//                 style: todoList[index].active
+//                     ? const TextStyle(
+//                         fontSize: 22,
+//                         decoration: TextDecoration.lineThrough,
+//                         color: Colors.grey,
+//                         fontStyle: FontStyle.italic,
+//                       )
+//                     : const TextStyle(
+//                         fontSize: 22,
+//                         color: Color.fromARGB(207, 0, 0, 0),
+//                       ),
+//               ),
+//               subtitle: Text(
+//                 '${todoList[index].dateTime.day}/${todoList[index].dateTime.month}/${todoList[index].dateTime.year}   ${todoList[index].dateTime.hour}:${todoList[index].dateTime.minute}',
+//                 style: const TextStyle(fontSize: 12),
+//               ),
+//             ),
+//         ],
+//         onReorder: (oldIndex, newIndex) {
+//           if (oldIndex < newIndex) {
+//             newIndex -= 1;
+//           }
+//           userNotifier.swapItem(oldIndex, newIndex);
+//         },
+//       ),
+//     );
+//   }
+// }

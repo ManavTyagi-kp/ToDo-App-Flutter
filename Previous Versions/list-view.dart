@@ -160,6 +160,7 @@ class _MyListState extends State<MyList> {
                           // _validate = false;
                           todos.add(
                             Todo(
+                              ind: 0, //TODO Error
                               desc: desc!,
                               dateTime: dateTime,
                               active: false,

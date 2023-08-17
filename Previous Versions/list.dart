@@ -7,12 +7,12 @@ final validateStateProvider = StateProvider<bool>((ref) {
   return false;
 });
 
-class ListViewerSwap extends ConsumerWidget {
+class ListViewer extends ConsumerWidget {
   // const ListViewer({super.key});
 
   var desc;
 
-  ListViewerSwap({super.key});
+  ListViewer({super.key});
 
   void changeStatus(WidgetRef ref, Todo todo) {
     ref.read(todoProvider.notifier).changeData(todo);
@@ -30,7 +30,7 @@ class ListViewerSwap extends ConsumerWidget {
     final validator = ref.watch(validateStateProvider);
     // final todoList = ref.watch(todoProvider);
     return Scaffold(
-      body: ListSwapStl(),
+      body: const ListItem(),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           showDialog(
@@ -101,6 +101,7 @@ class ListViewerSwap extends ConsumerWidget {
                         changeStatus(
                           ref,
                           Todo(
+                            ind: 0, //TODO Error
                             desc: desc!,
                             dateTime: dateTime,
                             active: false,
@@ -137,51 +138,44 @@ class ListViewerSwap extends ConsumerWidget {
       );
 }
 
-class ListSwapStl extends ConsumerWidget {
-  // const ListSwapStl({super.key});
+class ListItem extends ConsumerStatefulWidget {
+  const ListItem({super.key});
 
-  var desc;
+  @override
+  ConsumerState<ListItem> createState() => _ListItemState();
+}
+
+class _ListItemState extends ConsumerState<ListItem> {
+  GlobalKey<_ListItemState> myWidgetKey = GlobalKey<_ListItemState>();
 
   void changeStatus(WidgetRef ref, Todo todo) {
     ref.read(todoProvider.notifier).changeData(todo);
   }
 
-  FocusNode _generateFocus(int index) {
-    final FocusNode index = FocusNode();
-    return index;
-  }
-
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     debugPrint('Build');
     final todoList = ref.watch(todoProvider);
-    final FocusNode foucusNode1 = FocusNode();
 
     final userNotifier = ref.read(todoProvider.notifier);
     return Scaffold(
-      body: ReorderableListView(
-        buildDefaultDragHandles: true,
-        children: [
-          for (int index = 0; index < todoList.length; index++)
-            CheckboxListTile(
-              // key: ValueKey(index),
-              key: GlobalKey(),
+      body: ListView.builder(
+          itemCount: ref.watch(todoProvider.select((value) => value.length)),
+          itemBuilder: (_, index) {
+            return CheckboxListTile(
               value: todoList[index].active,
               onChanged: (value) {
+                // setState(() {
+                //   index.active = value!;
+                // });
                 userNotifier.updateTodoStatus(index, value!);
+                // changeStatus(ref, todoList[index]);
               },
               title: TextFormField(
-                focusNode: _generateFocus(index),
-                textInputAction: TextInputAction.done,
                 decoration: const InputDecoration(border: InputBorder.none),
                 initialValue: todoList[index].desc,
-                onFieldSubmitted: (val) {
-                  print(GlobalKey());
-                  // _generateFocus(index).dispose();
-                  userNotifier.updateText(index, val);
-                },
-                onEditingComplete: () {
-                  _generateFocus(index).dispose();
+                onChanged: (value) {
+                  userNotifier.updateText(index, value);
                 },
                 style: todoList[index].active
                     ? const TextStyle(
@@ -199,85 +193,8 @@ class ListSwapStl extends ConsumerWidget {
                 '${todoList[index].dateTime.day}/${todoList[index].dateTime.month}/${todoList[index].dateTime.year}   ${todoList[index].dateTime.hour}:${todoList[index].dateTime.minute}',
                 style: const TextStyle(fontSize: 12),
               ),
-            ),
-        ],
-        onReorder: (oldIndex, newIndex) {
-          if (oldIndex < newIndex) {
-            newIndex -= 1;
-          }
-          userNotifier.swapItem(oldIndex, newIndex);
-        },
-      ),
+            );
+          }),
     );
   }
 }
-
-// class ListSwapStf extends ConsumerStatefulWidget {
-//   const ListSwapStf({super.key});
-
-//   @override
-//   ConsumerState<ListSwapStf> createState() => _ListSwapStfState();
-// }
-
-// class _ListSwapStfState extends ConsumerState<ListSwapStf> {
-//   void changeStatus(WidgetRef ref, Todo todo) {
-//     ref.read(todoProvider.notifier).changeData(todo);
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     debugPrint('Build');
-//     final todoList = ref.watch(todoProvider);
-
-//     final userNotifier = ref.read(todoProvider.notifier);
-//     return Scaffold(
-//       body: ReorderableListView(
-//         buildDefaultDragHandles: true,
-//         children: [
-//           for (int index = 0; index < todoList.length; index++)
-//             CheckboxListTile(
-//               // key: ValueKey(index),
-//               key: GlobalKey(),
-//               value: todoList[index].active,
-//               onChanged: (value) {
-//                 userNotifier.updateTodoStatus(index, value!);
-//               },
-//               title: TextFormField(
-//                 decoration: const InputDecoration(border: InputBorder.none),
-//                 initialValue: todoList[index].desc,
-//                 // onFieldSubmitted: (value) {
-//                 //   userNotifier.updateText(index, value);
-//                 // },
-//                 onChanged: (value) {
-//                   setState(() {
-//                     userNotifier.updateText(index, value);
-//                   });
-//                 },
-//                 style: todoList[index].active
-//                     ? const TextStyle(
-//                         fontSize: 22,
-//                         decoration: TextDecoration.lineThrough,
-//                         color: Colors.grey,
-//                         fontStyle: FontStyle.italic,
-//                       )
-//                     : const TextStyle(
-//                         fontSize: 22,
-//                         color: Color.fromARGB(207, 0, 0, 0),
-//                       ),
-//               ),
-//               subtitle: Text(
-//                 '${todoList[index].dateTime.day}/${todoList[index].dateTime.month}/${todoList[index].dateTime.year}   ${todoList[index].dateTime.hour}:${todoList[index].dateTime.minute}',
-//                 style: const TextStyle(fontSize: 12),
-//               ),
-//             ),
-//         ],
-//         onReorder: (oldIndex, newIndex) {
-//           if (oldIndex < newIndex) {
-//             newIndex -= 1;
-//           }
-//           userNotifier.swapItem(oldIndex, newIndex);
-//         },
-//       ),
-//     );
-//   }
-// }

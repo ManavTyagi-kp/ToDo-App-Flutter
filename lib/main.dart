@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:to_do_list/pages/NavigatonBar.dart';
-import 'package:to_do_list/pages/list-view.dart';
-import 'package:to_do_list/pages/list.dart';
-import 'package:to_do_list/pages/swapableList.dart';
 import 'package:to_do_list/pages/timerList.dart';
 
 void main() {

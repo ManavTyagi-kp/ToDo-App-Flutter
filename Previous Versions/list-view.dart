@@ -4,9 +4,9 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:to_do_list/pages/list.dart';
+import 'list.dart';
 
-import '../utility/riverpod.dart';
+import '../lib/utility/riverpod.dart';
 
 class MyList extends StatefulWidget {
   @override

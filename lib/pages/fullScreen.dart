@@ -24,12 +24,12 @@ class FullScreen extends StatelessWidget {
         return OrientationBuilder(
           builder: (context, orientation) {
             final int fullTime = ref.watch(fullTimeProvider(ind));
-            if (MediaQuery.of(context).orientation == Orientation.portrait) {
-              SystemChrome.setPreferredOrientations([
-                DeviceOrientation.landscapeLeft,
-                DeviceOrientation.landscapeRight,
-              ]);
-            }
+            // if (MediaQuery.of(context).orientation == Orientation.portrait) {
+            //   SystemChrome.setPreferredOrientations([
+            //     DeviceOrientation.landscapeLeft,
+            //     DeviceOrientation.landscapeRight,
+            //   ]);
+            // }
             return Stack(
               fit: StackFit.expand,
               children: [

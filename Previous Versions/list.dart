@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../utility/riverpod.dart';
+import '../lib/utility/riverpod.dart';
 
 final validateStateProvider = StateProvider<bool>((ref) {
   return false;

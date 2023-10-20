@@ -1,9 +1,13 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:async';
 import 'dart:convert';
+// import 'dart:html';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
+import 'package:to_do_list/controller/todoListController.dart';
 
 // Todo todo1 = Todo(desc: '111ef', dateTime: DateTime.now(), active: false);
 // Todo todo2 = Todo(desc: '222ef', dateTime: DateTime.now(), active: false);
@@ -24,7 +28,7 @@ List<Todo> todoWithIndex = todos
     .cast<Todo>()
     .toList();
 
-final indexProvider = StateProvider((ref) => 0);
+final indexProvider = StateProvider((ref) => 'a');
 
 final tasksDone = Provider<List<Todo>>((ref) {
   final tasks = ref.watch(todoProvider);
@@ -40,10 +44,10 @@ final todoProvider = StateNotifierProvider<UserNotifier, List<Todo>>((ref) {
   return UserNotifier();
 });
 
-final fullTimeProvider = StateProvider.family<int, int>((ref, index) => 0);
+final fullTimeProvider = StateProvider.family<int, String>((ref, index) => 0);
 
 final timeProvider =
-    StateNotifierProvider.family<TimeProvider, AsyncValue<double>, int>(
+    StateNotifierProvider.family<TimeProvider, AsyncValue<double>, String>(
   (ref, ind) {
     // int index = ref.watch(todoProvider.notifier).getIndex(ind);
     return TimeProvider(ind, changeStatus: () {
@@ -53,7 +57,7 @@ final timeProvider =
 );
 
 class TimeProvider extends StateNotifier<AsyncValue<double>> {
-  final int index;
+  final String index;
   final VoidCallback changeStatus;
   late StreamSubscription<double>? _subscription; // Add this variable
 
@@ -97,16 +101,10 @@ class TimeProvider extends StateNotifier<AsyncValue<double>> {
     _subscription?.cancel();
     super.dispose();
   }
-  // void swap(int oldIndex, int newIndex){
-  //   final newState = state.;
-  //   final itemToMove = newState.copyWithPrevious(oldIndex);
-  //   newState.insert(newIndex, itemToMove);
-  //   state = newState;
-  // }
 }
 
 class Todo {
-  final int ind;
+  final String ind;
   String desc;
   String? description;
   DateTime dateTime;
@@ -121,7 +119,7 @@ class Todo {
   });
 
   Todo copyWith({
-    int? index,
+    String? index,
     String? desc,
     String? description,
     DateTime? dateTime,
@@ -148,7 +146,7 @@ class Todo {
 
   factory Todo.fromMap(Map<String, dynamic> map) {
     return Todo(
-      ind: map['index'] as int,
+      ind: map['index'] as String,
       desc: map['desc'] as String,
       description:
           map['description'] != null ? map['description'] as String : null,
@@ -186,26 +184,42 @@ class Todo {
         dateTime.hashCode ^
         active.hashCode;
   }
+
+  factory Todo.fromSnapshpt(DocumentSnapshot<Map<String, dynamic>> document) {
+    final data = document.data();
+    return Todo(
+      ind: data!['index'],
+      desc: data["desc"],
+      description: data["description"],
+      dateTime: DateTime.fromMillisecondsSinceEpoch(data['dateTime'] as int),
+      active: data["active"],
+    );
+  }
 }
 
 class UserNotifier extends StateNotifier<List<Todo>> {
   // UserNotifier() : super([todo1, todo2, todo3]);
   UserNotifier() : super([]);
+  final controller = Get.put(TodoController());
 
-  void updateTodoStatus(int ind, bool newStatus) {
+  void updateTodoStatus(String ind, bool newStatus) {
+    print('update called');
     final newState = [...state];
     int index = newState.indexWhere((todo) => todo.ind == ind);
     state[index] = state[index].copyWith(active: newStatus);
+    controller.updateTodoData(state[index]);
     state = [...state];
   }
 
   void updateText(int index, String newText) {
     state[index] = state[index].copyWith(desc: newText);
+    controller.updateTodoData(state[index]);
     state = [...state];
   }
 
   void addDesc(int index, String description) {
     state[index] = state[index].copyWith(description: description);
+    controller.updateTodoData(state[index]);
   }
 
   int getIndex(int ind) {
@@ -222,6 +236,13 @@ class UserNotifier extends StateNotifier<List<Todo>> {
     final newState = [...state];
     final itemToMove = newState.removeAt(oldIndex);
     newState.insert(newIndex, itemToMove);
+    state = newState;
+  }
+
+  void delete(int index) {
+    final newState = [...state];
+    controller.deleteTodoItem(newState[index]);
+    newState.removeAt(index);
     state = newState;
   }
 }

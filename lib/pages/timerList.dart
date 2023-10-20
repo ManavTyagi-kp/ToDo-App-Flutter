@@ -1,9 +1,14 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:async';
-import 'dart:js_interop';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
+import 'package:to_do_list/Repository/todoRepo.dart';
+import 'package:to_do_list/card/ListCard.dart';
+import 'package:to_do_list/controller/todoListController.dart';
 
 import '../utility/riverpod.dart';
 import 'fullScreen.dart';
@@ -12,18 +17,37 @@ final validateStateProvider = StateProvider<bool>((ref) {
   return false;
 });
 
-class ListViewerTimer extends ConsumerWidget {
-  // const ListViewer({super.key});
+class ListViewerTimer extends ConsumerStatefulWidget {
   String type;
-  String? desc;
-  var todoList = [];
 
   ListViewerTimer({
     super.key,
     required this.type,
   });
 
+  @override
+  ConsumerState<ListViewerTimer> createState() => _ListViewerTimerState();
+}
+
+class _ListViewerTimerState extends ConsumerState<ListViewerTimer> {
+  String generateRandomString(int length) {
+    const String charset =
+        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final Random random = Random();
+    return String.fromCharCodes(Iterable.generate(
+      length,
+      (_) => charset.codeUnitAt(random.nextInt(charset.length)),
+    ));
+  }
+
+  String? desc;
+
+  var todoList = [];
+
+  final todoRepo = Get.put(TodoRepo());
+
   void changeStatus(WidgetRef ref, Todo todo) {
+    todoRepo.addTodo(todo);
     ref.read(todoProvider.notifier).changeData(todo);
   }
 
@@ -31,17 +55,18 @@ class ListViewerTimer extends ConsumerWidget {
 
   final TextEditingController _controller =
       TextEditingController(text: DateTime.now().toString());
+
   final TextEditingController _text = TextEditingController();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     // print('todolist: $todoList');
     debugPrint('Build View');
     final validator = ref.watch(validateStateProvider);
     // final todoList = ref.watch(todoProvider);
     return Scaffold(
       body: ListSwapStl(
-        type: type,
+        type: widget.type,
       ),
       floatingActionButton: Align(
         alignment: Alignment.bottomCenter,
@@ -123,8 +148,8 @@ class ListViewerTimer extends ConsumerWidget {
                               .update((state) => true);
                           return;
                         } else {
-                          int index = ref.watch(indexProvider);
-                          ref.read(indexProvider.notifier).state++;
+                          String index = generateRandomString(12);
+                          // ref.read(indexProvider.notifier).state = 'a';
                           changeStatus(
                             ref,
                             Todo(
@@ -134,6 +159,7 @@ class ListViewerTimer extends ConsumerWidget {
                               active: false,
                             ),
                           );
+
                           _text.clear();
                           Duration diff = dateTime.difference(DateTime.now());
 
@@ -197,292 +223,71 @@ class ListSwapStl extends ConsumerWidget {
     super.key,
     required this.type,
   });
-  double progress = 0.0;
   String type;
-  var desc;
   List<Todo> todoList = [];
+
+  double progress = 0.0;
+
+  var desc;
 
   void changeStatus(WidgetRef ref, Todo todo) {
     ref.read(todoProvider.notifier).changeData(todo);
   }
 
-  FocusNode _generateFocus(int index) {
-    final FocusNode index = FocusNode();
-    return index;
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // debugPrint('Build');
-    // final todoList = ref.watch(todoProvider);
-    if (type == 'home') {
-      todoList = ref.watch(todoProvider);
-    } else if (type == 'completed') {
-      todoList = ref.watch(tasksDone);
-    } else {
-      todoList = ref.watch(tasksDoing);
-    }
+    // final controller = Get.put(TodoController());
 
     final userNotifier = ref.read(todoProvider.notifier);
-    return todoList.isEmpty
-        ? Container(
-            decoration: const BoxDecoration(
-              color: Color.fromARGB(255, 27, 27, 27),
-            ),
-            child: const Center(
-              child: Text(
-                'No items in the list yet',
-                style: TextStyle(
-                  color: Colors.white,
+    return Scaffold(
+      backgroundColor: const Color.fromARGB(255, 29, 29, 29),
+      body: OrientationBuilder(builder: (context, orientation) {
+        if (type == 'home') {
+          todoList = ref.watch(todoProvider);
+        } else if (type == 'completed') {
+          todoList = ref.watch(tasksDone);
+        } else {
+          todoList = ref.watch(tasksDoing);
+        }
+        return todoList.isEmpty
+            ? Container(
+                decoration: const BoxDecoration(
+                  color: Color.fromARGB(255, 27, 27, 27),
                 ),
-              ),
-            ),
-          )
-        : Scaffold(
-            backgroundColor: Color.fromARGB(255, 27, 27, 27),
-            body: ReorderableListView(
-              buildDefaultDragHandles: true,
-              children: [
-                for (int index = 0; index < todoList.length; index++)
-                  Builder(
-                      key: GlobalKey(),
-                      builder: (context) {
-                        print('Built');
-                        int ind = todoList[index].ind;
-                        bool _active = todoList[index].active;
-                        Duration diff =
-                            todoList[index].dateTime.difference(DateTime.now());
-                        return Card(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                                15.0), // Adjust the radius as needed
-                            side: const BorderSide(
-                              color: Colors.amberAccent, // Border color
-                              width: 15, // Border width
-                            ),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(6.0),
-                            child: CheckboxListTile(
-                              tileColor: Colors.amberAccent,
-                              value: todoList[index].active,
-                              hoverColor:
-                                  const Color.fromARGB(255, 245, 212, 94),
-                              contentPadding: const EdgeInsets.all(20),
-                              // key: GlobalKey(),
-                              onChanged: (value) {
-                                value!
-                                    ? {
-                                        ref
-                                            .read(todoProvider.notifier)
-                                            .updateTodoStatus(ind, value),
-                                        ref
-                                            .read(timeProvider(ind).notifier)
-                                            .pauseStream(),
-                                      }
-                                    : {
-                                        ref
-                                            .read(todoProvider.notifier)
-                                            .updateTodoStatus(ind, value),
-                                        ref
-                                            .read(timeProvider(ind).notifier)
-                                            .resumeStream(),
-                                      };
-                              },
-                              title: Row(
-                                children: [
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      if (_active != true) {
-                                        debugPrint(diff.inSeconds.toString());
-                                        if (diff.inSeconds < 21600 &&
-                                            diff.inSeconds > 0) {
-                                          print('index: $index');
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => FullScreen(
-                                                index: index,
-                                                ind: ind,
-                                              ),
-                                            ),
-                                          );
-                                        } else if (diff.inSeconds < 0) {
-                                          ScaffoldMessenger.of(context)
-                                            ..removeCurrentSnackBar()
-                                            ..showSnackBar(
-                                              const SnackBar(
-                                                content: Text(
-                                                  'Time Over',
-                                                ),
-                                              ),
-                                            );
-                                        } else {
-                                          ScaffoldMessenger.of(context)
-                                            ..removeCurrentSnackBar()
-                                            ..showSnackBar(
-                                              const SnackBar(
-                                                content: Text(
-                                                  'Time left should be less than 6 hours for focus mode',
-                                                ),
-                                              ),
-                                            );
-                                        }
-                                      } else {
-                                        null;
-                                      }
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                        shape: const CircleBorder(
-                                          eccentricity: 0,
-                                        ),
-                                        padding: const EdgeInsets.all(10)),
-                                    child: Stack(
-                                      children: [
-                                        Consumer(
-                                            builder: (context, ref, child) {
-                                          return CircularProgressIndicator(
-                                            value: ref
-                                                .watch(timeProvider(ind))
-                                                .when(
-                                                  data: (countdownValue) {
-                                                    if (countdownValue >
-                                                        0.0199) {
-                                                      progress = countdownValue;
-                                                      return progress;
-                                                    } else {
-                                                      return 0;
-                                                    }
-                                                  },
-                                                  loading: () => 0,
-                                                  error: (error, stackTrace) =>
-                                                      0,
-                                                ),
-                                            valueColor: progress > 0.25
-                                                ? const AlwaysStoppedAnimation<
-                                                    Color>(Colors.green)
-                                                : const AlwaysStoppedAnimation(
-                                                    Colors.red),
-                                            backgroundColor:
-                                                Colors.black.withOpacity(0),
-                                          );
-                                        }),
-                                        Positioned.fill(
-                                          child: Transform.translate(
-                                            offset: const Offset(0, 0),
-                                            child: const Icon(
-                                              Icons.play_arrow_outlined,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    onHover: (value) {
-                                      const Tooltip(
-                                        message: 'Focus Mode',
-                                      );
-                                    },
-                                  ),
-                                  SizedBox(
-                                    width: 300,
-                                    height: 50,
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Expanded(
-                                          flex: 2,
-                                          child: TextFormField(
-                                            focusNode: _generateFocus(index),
-                                            textInputAction:
-                                                TextInputAction.done,
-                                            decoration: const InputDecoration(
-                                                border: InputBorder.none),
-                                            initialValue: todoList[index].desc,
-                                            onFieldSubmitted: (val) {
-                                              print(GlobalKey());
-                                              _generateFocus(index).dispose();
-                                              userNotifier.updateText(
-                                                  index, val);
-                                            },
-                                            onEditingComplete: () {
-                                              _generateFocus(index).dispose();
-                                            },
-                                            style: todoList[index].active
-                                                ? const TextStyle(
-                                                    fontSize: 22,
-                                                    decoration: TextDecoration
-                                                        .lineThrough,
-                                                    color: Colors.grey,
-                                                    fontStyle: FontStyle.italic,
-                                                  )
-                                                : const TextStyle(
-                                                    fontSize: 22,
-                                                    color: Color.fromARGB(
-                                                        207, 0, 0, 0),
-                                                  ),
-                                          ),
-                                        ),
-                                        Align(
-                                          alignment: Alignment.centerLeft,
-                                          child: Text(
-                                            '${todoList[index].dateTime.day}/${todoList[index].dateTime.month}/${todoList[index].dateTime.year}   ${todoList[index].dateTime.hour}:${todoList[index].dateTime.minute}',
-                                            style:
-                                                const TextStyle(fontSize: 12),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              subtitle: Padding(
-                                padding: EdgeInsets.fromLTRB(15, 0, 0, 0),
-                                child: TextFormField(
-                                  focusNode: _generateFocus(index),
-                                  textInputAction: TextInputAction.done,
-                                  decoration: const InputDecoration(
-                                      hintText: 'Add SubTitle',
-                                      border: InputBorder.none),
-                                  initialValue: todoList[index].description,
-                                  onChanged: (val) {
-                                    print(GlobalKey());
-                                    _generateFocus(index).dispose();
-                                    userNotifier.addDesc(index, val);
-                                  },
-                                  onEditingComplete: () {
-                                    _generateFocus(index).dispose();
-                                  },
-                                  style: todoList[index].active
-                                      ? const TextStyle(
-                                          fontSize: 11,
-                                          decoration:
-                                              TextDecoration.lineThrough,
-                                          color: Colors.grey,
-                                          fontStyle: FontStyle.italic,
-                                        )
-                                      : const TextStyle(
-                                          fontSize: 11,
-                                          color: Color.fromARGB(207, 0, 0, 0),
-                                        ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-              ],
-              onReorder: (oldIndex, newIndex) {
-                if (oldIndex < newIndex) {
-                  newIndex -= 1;
-                }
-                // final prov1 = ref.read(timeProvider(oldIndex).notifier).start(time);
-                // ref.read(timeProvider(oldIndex).notifier).state =
-                //     ref.read(timeProvider(newIndex).notifier).state;
-                // ref.read(timeProvider(newIndex).notifier).state = prov1;
-                userNotifier.swapItem(oldIndex, newIndex);
-              },
-            ),
-          );
+                child: const Center(
+                  child: Text(
+                    'No items in the list yet',
+                    style: TextStyle(
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              )
+            : Scaffold(
+                backgroundColor: Color.fromARGB(255, 27, 27, 27),
+                body: ReorderableListView(
+                  buildDefaultDragHandles: true,
+                  children: [
+                    for (int index = 0; index < todoList.length; index++)
+                      Builder(
+                          key: GlobalKey(),
+                          builder: (context) {
+                            print('Built');
+                            return ListCard(
+                              todo: todoList[index],
+                              index: index,
+                            );
+                          }),
+                  ],
+                  onReorder: (oldIndex, newIndex) {
+                    if (oldIndex < newIndex) {
+                      newIndex -= 1;
+                    }
+                    userNotifier.swapItem(oldIndex, newIndex);
+                  },
+                ),
+              );
+      }),
+    );
   }
 }

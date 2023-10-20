@@ -6,7 +6,7 @@ import '../utility/riverpod.dart';
 
 class FullScreen extends StatelessWidget {
   int index;
-  int ind;
+  String ind;
   FullScreen({
     Key? key,
     required this.index,
@@ -21,84 +21,74 @@ class FullScreen extends StatelessWidget {
 
     return Scaffold(
       body: Consumer(builder: (context, ref, child) {
-        return OrientationBuilder(
-          builder: (context, orientation) {
-            final int fullTime = ref.watch(fullTimeProvider(ind));
-            if (MediaQuery.of(context).orientation == Orientation.portrait) {
-              SystemChrome.setPreferredOrientations([
-                DeviceOrientation.landscapeLeft,
-                DeviceOrientation.landscapeRight,
-              ]);
-            }
-            return Stack(
-              fit: StackFit.expand,
-              children: [
-                SizedBox(
-                  width: MediaQuery.of(context).size.width,
-                  // color: Colors.red,
-                  child: LinearProgressIndicator(
-                    minHeight: screenHeight,
-                    // value: progress,
-                    value: ref.watch(timeProvider(ind)).when(
-                          data: (countdownValue) {
-                            // if (countdownValue <= 0) {
-                            //   ref
-                            //       .read(todoProvider.notifier)
-                            //       .updateTodoStatus(index, true);
-                            // }
-
-                            if (countdownValue * fullTime > 0.99999) {
-                              progress = countdownValue;
-                              return progress;
-                            } else {
-                              return 0;
-                            }
-                          },
-                          loading: () => 0,
-                          error: (error, stackTrace) => 0,
-                        ),
-                    valueColor: progress > 0.2
-                        ? const AlwaysStoppedAnimation<Color>(Colors.green)
-                        : const AlwaysStoppedAnimation(
-                            Color.fromRGBO(244, 67, 54, 1)),
-                    backgroundColor: Colors.black.withOpacity(0.4),
-                  ),
-                ),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Center(
-                      child: ref.watch(timeProvider(ind)).when(
-                            data: (countdownValue) {
-                              if (countdownValue * fullTime < 0.9999) {
-                                print('time zero');
-                                Future.delayed(const Duration(milliseconds: 10),
-                                    () {
-                                  Navigator.pop(context);
-                                  // ref
-                                  //     .read(todoProvider.notifier)
-                                  //     .updateTodoStatus(index, true);
-                                });
-                              }
-                              // print(countdownValue * fullTime);
-                              return CountdownDisplay(
-                                  countdownValue * fullTime);
-                            },
-                            loading: () => const Text('Loading...'),
-                            error: (error, stackTrace) => Text('Error: $error'),
-                          ),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
+        final int fullTime = ref.watch(fullTimeProvider(ind));
+        // if (MediaQuery.of(context).orientation == Orientation.portrait) {
+        //   SystemChrome.setPreferredOrientations([
+        //     DeviceOrientation.landscapeLeft,
+        //     DeviceOrientation.landscapeRight,
+        //   ]);
+        // }
+        return Stack(
+          textDirection: TextDirection.ltr,
+          fit: StackFit.expand,
+          children: [
+            SizedBox(
+              width: MediaQuery.of(context).size.width,
+              // color: Colors.red,
+              child: LinearProgressIndicator(
+                minHeight: screenHeight,
+                // value: progress,
+                value: ref.watch(timeProvider(ind)).when(
+                      data: (countdownValue) {
+                        if (countdownValue * fullTime > 0.99999) {
+                          progress = countdownValue;
+                          return progress;
+                        } else {
+                          return 0;
+                        }
                       },
-                      child: const Text('Exit'),
+                      loading: () => 0,
+                      error: (error, stackTrace) => 0,
                     ),
-                  ],
+                valueColor: progress > 0.2
+                    ? const AlwaysStoppedAnimation<Color>(Colors.green)
+                    : const AlwaysStoppedAnimation(
+                        Color.fromRGBO(244, 67, 54, 1)),
+                backgroundColor: Colors.black.withOpacity(0.4),
+              ),
+            ),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Center(
+                  child: ref.watch(timeProvider(ind)).when(
+                        data: (countdownValue) {
+                          if (countdownValue * fullTime < 0.9999) {
+                            print('time zero');
+                            Future.delayed(const Duration(milliseconds: 10),
+                                () {
+                              Navigator.pop(context);
+                              // ref
+                              //     .read(todoProvider.notifier)
+                              //     .updateTodoStatus(index, true);
+                            });
+                          }
+                          // print(countdownValue * fullTime);
+                          return CountdownDisplay(countdownValue * fullTime);
+                        },
+                        loading: () => const Text('Loading...'),
+                        error: (error, stackTrace) => Text('Error: $error'),
+                      ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Exit'),
                 ),
               ],
-            );
-          },
+            ),
+          ],
         );
       }),
     );
@@ -123,7 +113,7 @@ class CountdownDisplay extends StatelessWidget {
     final formattedDuration = formatDuration(countdownValue);
     return Text(
       formattedDuration,
-      style: const TextStyle(fontSize: 104, color: Colors.white),
+      style: const TextStyle(fontSize: 90, color: Colors.white),
     );
   }
 }
